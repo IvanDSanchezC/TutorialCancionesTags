@@ -79,20 +79,23 @@
                     return table.config.headers[cellIndex] && table.config.headers[cellIndex].sorter;
                   }
             
-                  function detectParserForColumn(table, rows, cellIndex) {
+                 function detectParserForColumn(table, rows, cellIndex) {
                     let rowIndex = -1, nodeValue = "", keepLooking = true;
                     while (nodeValue === "" && keepLooking) {
-                      rowIndex++;
-                      if (rows[rowIndex]) {
+                        rowIndex++;
+                        if (rows[rowIndex]) {
                         const node = rows[rowIndex].cells[cellIndex];
                         nodeValue = trimAndGetNodeText(table.config, node);
-                      } else {
+                        } else {
                         keepLooking = false;
-                      }
+                        }
+                    }
+                    if (parsers.length === 0) {
+                        console.warn("Warning: `parsers` está vacío. Se devolverá un valor predeterminado.");
+                        return null;
                     }
                     return parsers.find(parser => parser.is(nodeValue, table)) || parsers[0];
-                  }
-            
+                    }            
                   function trimAndGetNodeText(config, node) {
                     return $.trim(getElementText(config, node));
                   }
@@ -150,10 +153,25 @@
             
                   function applyWidget(table) {
                     const widgetList = table.config.widgets;
-                    widgetList.forEach(widget => getWidgetById(widget).format(table));
+                    if (widgetList.length > 0) {
+                      widgetList.forEach(widget => {
+                        const widgetInstance = getWidgetById(widget);
+                        if (widgetInstance) {
+                          widgetInstance.format(table);
+                        } else {
+                          console.warn(`Advertencia: El widget "${widget}" no fue encontrado.`);
+                        }
+                      });
+                    } else {
+                      console.warn("Advertencia: `widgetList` está vacío. No se aplicarán widgets.");
+                    }
                   }
             
                   function getWidgetById(name) {
+                    if (widgets.length === 0) {
+                      console.warn("Advertencia: `widgets` está vacío. No se puede encontrar el widget.");
+                      return null;
+                    }                    
                     return widgets.find(widget => widget.id.toLowerCase() === name.toLowerCase());
                   }
             
